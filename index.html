@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRUD Employees System</title>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* Base Styling */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: #333;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        /* Container */
+        .container {
+            max-width: 1100px;
+            margin: 20px auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        /* Header Section */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .system-title {
+            font-size: 28px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .stats {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .stat-item {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .interviews {
+            background-color: #333;
+            color: white;
+        }
+
+        .hired {
+            background-color: #ffd166;
+            color: #333;
+        }
+
+        /* Search and Filter Section */
+        .filters {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s ease;
+        }
+
+        .filter-btn:hover {
+            background: #eaeaea;
+        }
+
+        .search-container {
+            flex-grow: 1;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 15px 10px 40px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .search-input:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .add-btn {
+            background: #007bff;
+            color: white;
+        }
+
+        .add-btn:hover {
+            background: #0069d9;
+        }
+
+        .export-btn {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        .export-btn:hover {
+            background: #e2e6ea;
+        }
+
+        /* Form Styling */
+        .form-container {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            display: none;
+            animation: slideDown 0.3s ease-in-out;
+        }
+
+        .form-container.active {
+            display: block;
+        }
+
+        .form-title {
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .form-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 10px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: #007bff;
+            box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+            outline: none;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            border: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #0069d9;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+            transform: translateY(-2px);
+        }
+
+        /* Table Styling */
+        .table-container {
+            overflow-x: auto;
+            border-radius: 12px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        .table th {
+            background: #f8f9fa;
+            padding: 15px;
+            font-weight: 600;
+            color: #555;
+            border-bottom: 2px solid #eee;
+        }
+
+        .table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+
+        .table tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .table tr {
+            transition: background-color 0.2s ease;
+        }
+
+        .checkbox {
+            width: 18px;
+            height: 18px;
+            cursor: pointer;
+        }
+
+        .employee-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            object-fit: cover;
+            margin-right: 10px;
+        }
+
+        .employee-name {
+            display: flex;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+
+        .status-invited {
+            background-color: #e6f7e6;
+            color: #28a745;
+        }
+
+        .status-absent {
+            background-color: #f8f9fa;
+            color: #6c757d;
+        }
+
+        .status-employed {
+            background-color: #e6f4ff;
+            color: #007bff;
+        }
+
+        .status-hired {
+            background-color: #fff8e6;
+            color: #ffc107;
+        }
+
+        .action-icon {
+            padding: 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            color: #555;
+            transition: all 0.2s ease;
+        }
+
+        .action-icon:hover {
+            background: #f0f0f0;
+            color: #007bff;
+        }
+
+        .flag-icon {
+            width: 16px;
+            height: 16px;
+            margin-right: 5px;
+            vertical-align: middle;
+        }
+
+        /* Animation Keyframes */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from { 
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes highlight {
+            0% { background-color: rgba(0, 123, 255, 0.1); }
+            100% { background-color: transparent; }
+        }
+
+        .highlight {
+            animation: highlight 1.5s ease-in-out;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .search-container {
+                order: -1;
+            }
+            
+            .form-row {
+                flex-direction: column;
+            }
+            
+            .table th, .table td {
+                padding: 10px;
+            }
+            
+            .action-buttons {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .employee-name {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .employee-avatar {
+                margin-bottom: 5px;
+            }
+        }
+
+        /* Dark Mode Toggle */
+        .dark-mode-toggle {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
+
+        .dark-mode-toggle:hover {
+            transform: scale(1.1);
+        }
+
+        /* Dark Mode Styles */
+        body.dark {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #f0f0f0;
+        }
+
+        body.dark .container {
+            background: #222831;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        body.dark .system-title {
+            color: #f0f0f0;
+        }
+
+        body.dark .filter-btn {
+            background: #393e46;
+            border-color: #4a4a4a;
+            color: #f0f0f0;
+        }
+
+        body.dark .filter-btn:hover {
+            background: #4a4a4a;
+        }
+
+        body.dark .search-input {
+            background: #393e46;
+            border-color: #4a4a4a;
+            color: #f0f0f0;
+        }
+
+        body.dark .search-icon {
+            color: #aaa;
+        }
+
+        body.dark .export-btn {
+            background: #393e46;
+            border-color: #4a4a4a;
+            color: #f0f0f0;
+        }
+
+        body.dark .form-container {
+            background: #393e46;
+        }
+
+        body.dark .form-control {
+            background: #2d3239;
+            border-color: #4a4a4a;
+            color: #f0f0f0;
+        }
+
+        body.dark .table th {
+            background: #393e46;
+            color: #f0f0f0;
+            border-bottom-color: #4a4a4a;
+        }
+
+        body.dark .table td {
+            border-bottom-color: #4a4a4a;
+        }
+
+        body.dark .table tr:hover {
+            background-color: #2d3239;
+        }
+
+        body.dark .action-icon:hover {
+            background: #4a4a4a;
+        }
+
+        body.dark .status-invited {
+            background-color: rgba(40, 167, 69, 0.2);
+        }
+
+        body.dark .status-absent {
+            background-color: rgba(108, 117, 125, 0.2);
+        }
+
+        body.dark .status-employed {
+            background-color: rgba(0, 123, 255, 0.2);
+        }
+
+        body.dark .status-hired {
+            background-color: rgba(255, 193, 7, 0.2);
+        }
+
+        /* Debug Info */
+        .debug-info {
+            margin-top: 20px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+        }
+
+        body.dark .debug-info {
+            background: #393e46;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 class="system-title">CRUD Employees System</h1>
+            <div class="stats">
+                <div class="stat-item interviews">
+                    <i class="fas fa-user-tie"></i> Interviews: 25%
+                </div>
+                <div class="stat-item hired">
+                    <i class="fas fa-user-check"></i> Hired: 51%
+                </div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-btn">
+                <i class="fas fa-columns"></i> Columns <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="filter-btn">
+                <i class="fas fa-building"></i> Department <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="filter-btn">
+                <i class="fas fa-map-marker-alt"></i> Site <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="filter-btn">
+                <i class="fas fa-life-ring"></i> Lifecycle <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="filter-btn">
+                <i class="fas fa-info-circle"></i> Status <i class="fas fa-chevron-down"></i>
+            </div>
+            <div class="search-container">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="searchInput" placeholder="Search...">
+            </div>
+            <div class="action-buttons">
+                <button class="action-btn add-btn" id="showFormBtn">
+                    <i class="fas fa-plus"></i> Add
+                </button>
+                <button class="action-btn export-btn">
+                    <i class="fas fa-file-export"></i> Export
+                </button>
+            </div>
+        </div>
+
+        <div class="form-container" id="formContainer">
+            <h3 class="form-title" id="formTitle">Add New Employee</h3>
+            <form id="employeeForm">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="empName">Employee Name</label>
+                        <input type="text" class="form-control" id="empName" placeholder="Enter name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="position">Position</label>
+                        <input type="text" class="form-control" id="position" placeholder="Enter position" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="department">Department</label>
+                        <select class="form-control" id="department" required>
+                            <option value="">Select department</option>
+                            <option value="Product">Product</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Operations">Operations</option>
+                            <option value="Sales">Sales</option>
+                            <option value="Marketing">Marketing</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="location">Location</label>
+                        <select class="form-control" id="location" required>
+                            <option value="">Select location</option>
+                            <option value="Stockholm">Phnom Penh</option>
+                            <option value="Miami">Battambong</option>
+                            <option value="Kyiv">Paillin</option>
+                            <option value="Ottawa">Svay Reang</option>
+                            <option value="Sao Paulo">Kompong chnam</option>
+                            <option value="London">Kompot</option>
+                            <option value="New York">Kep</option>
+                            <option value="Berlin">Kompong Spue</option>
+                            <option value="Tokyo">Tar keo</option>
+                            <option value="Paris">Porsat</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="salary">Salary</label>
+                        <input type="number" class="form-control" id="salary" placeholder="Enter salary" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="hireDate">Hire Date</label>
+                        <input type="date" class="form-control" id="hireDate" required>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="status">Status</label>
+                        <select class="form-control" id="status" required>
+                            <option value="">Select status</option>
+                            <option value="Hired">Hired</option>
+                            <option value="Employed">Employed</option>
+                            <option value="Invited">Invited</option>
+                            <option value="Absent">Absent</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-secondary" id="cancelBtn">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="saveBtn">Save Employee</button>
+                </div>
+            </form>
+        </div>
+
+        <div class="table-container">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th><input type="checkbox" class="checkbox" id="selectAll"></th>
+                        <th>Name</th>
+                        <th>Job Title</th>
+                        <th>Department</th>
+                        <th>Province</th>
+                        <th>Salary</th>
+                        <th>Start Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="employeeList"></tbody>
+            </table>
+        </div>
+        
+        <div class="debug-info" id="debugInfo"></div>
+    </div>
+
+    <div class="dark-mode-toggle" id="darkModeToggle">
+        <i class="fas fa-moon"></i>
+    </div>
+
+    <script>
+        // DOM Elements
+        const employeeForm = document.getElementById('employeeForm');
+        const employeeList = document.getElementById('employeeList');
+        const formContainer = document.getElementById('formContainer');
+        const showFormBtn = document.getElementById('showFormBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const formTitle = document.getElementById('formTitle');
+        const saveBtn = document.getElementById('saveBtn');
+        const searchInput = document.getElementById('searchInput');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const selectAll = document.getElementById('selectAll');
+        const debugInfo = document.getElementById('debugInfo');
+        
+        // State variables
+        let employees = [];
+        let editingId = null;
+
+        // Sample avatar URLs
+        const avatars = [
+            'https://randomuser.me/api/portraits/men/1.jpg',
+            'https://randomuser.me/api/portraits/women/1.jpg',
+            'https://randomuser.me/api/portraits/men/2.jpg',
+            'https://randomuser.me/api/portraits/women/2.jpg',
+            'https://randomuser.me/api/portraits/men/3.jpg',
+            'https://randomuser.me/api/portraits/women/3.jpg'
+        ];
+
+        // Country flags
+        const flags = {
+            'Stockholm': '',
+            'Miami': '',
+            'Kyiv': '',
+            'Ottawa': '',
+            'Sao Paulo': '',
+            'London': '',
+            'New York': '',
+            'Berlin': '',
+            'Tokyo': '',
+            'Paris': ''
+        };
+
+        // Sample data
+        const sampleEmployees = [
+            { id: '001', name: 'Anatoly Belik', position: 'Head of Design', department: 'Product', location: 'Stockholm', salary: 1350, hireDate: '2023-03-13', status: 'Hired', avatar: avatars[0] },
+            { id: '002', name: 'Ksenia Bator', position: 'Fullstack Engineer', department: 'Engineering', location: 'Miami', salary: 1500, hireDate: '2023-10-13', status: 'Absent', avatar: avatars[1] },
+            { id: '003', name: 'Bogdan Nikitin', position: 'Mobile Lead', department: 'Product', location: 'Kyiv', salary: 2600, hireDate: '2023-11-04', status: 'Employed', avatar: avatars[2] },
+            { id: '004', name: 'Arsen Yatsenko', position: 'Sales Manager', department: 'Operations', location: 'Ottawa', salary: 900, hireDate: '2021-09-04', status: 'Employed', avatar: avatars[3] },
+            { id: '005', name: 'Daria Yurchenko', position: 'Network Engineer', department: 'Product', location: 'Sao Paulo', salary: 1000, hireDate: '2023-02-21', status: 'Hired', avatar: avatars[4] },
+            { id: '006', name: 'Yulia Palishchuk', position: 'Head of Design', department: 'Product', location: 'London', salary: 1700, hireDate: '2024-08-02', status: 'Employed', avatar: avatars[5] }
+        ];
+
+        // Load employees from localStorage or use sample data
+        function loadEmployees() {
+            try {
+                const storedEmployees = localStorage.getItem('employees');
+                if (storedEmployees) {
+                    employees = JSON.parse(storedEmployees);
+                    console.log('Loaded employees from localStorage:', employees);
+                } else {
+                    // Use sample data if no stored data
+                    employees = [...sampleEmployees];
+                    saveEmployeesToStorage();
+                    console.log('Initialized with sample data:', employees);
+                }
+            } catch (error) {
+                console.error('Error loading employees:', error);
+                employees = [...sampleEmployees];
+                saveEmployeesToStorage();
+            }
+        }
+
+        // Save employees to localStorage
+        function saveEmployeesToStorage() {
+            try {
+                localStorage.setItem('employees', JSON.stringify(employees));
+                console.log('Saved employees to localStorage:', employees);
+                return true;
+            } catch (error) {
+                console.error('Error saving employees:', error);
+                return false;
+            }
+        }
+
+        // Toggle form visibility
+        showFormBtn.addEventListener('click', () => {
+            formContainer.classList.add('active');
+            employeeForm.reset();
+            editingId = null;
+            formTitle.textContent = 'Add New Employee';
+            saveBtn.textContent = 'Save Employee';
+            
+            // Set today's date as default
+            document.getElementById('hireDate').valueAsDate = new Date();
+        });
+
+        // Hide form
+        cancelBtn.addEventListener('click', () => {
+            formContainer.classList.remove('active');
+            employeeForm.reset();
+        });
+
+        // Format date to readable format
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString(undefined, options);
+        }
+
+        // Display employees
+        function displayEmployees(employeesToDisplay = employees) {
+            employeeList.innerHTML = '';
+            
+            if (employeesToDisplay.length === 0) {
+                employeeList.innerHTML = `
+                    <tr>
+                        <td colspan="9" style="text-align: center; padding: 20px;">
+                            No employees found. Add a new employee to get started.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            employeesToDisplay.forEach((employee) => {
+                const status = employee.status || 'Unknown';
+                const location = employee.location || 'Unknown';
+                const department = employee.department || 'Unknown';
+                const statusClass = `status-${status.toLowerCase()}`;
+                const flagEmoji = flags[location] || '🌍';
+                
+                employeeList.innerHTML += `
+                    <tr data-id="${employee.id}">
+                        <td><input type="checkbox" class="checkbox employee-checkbox"></td>
+                        <td class="employee-name">
+                            <img src="${employee.avatar || avatars[Math.floor(Math.random() * avatars.length)]}" alt="${employee.name}" class="employee-avatar">
+                            ${employee.name}
+                        </td>
+                        <td>${employee.position}</td>
+                        <td>${employee.department}</td>
+                        <td>${employee.location}</td>
+                        <td>$${employee.salary}</td>
+                        <td>${formatDate(employee.hireDate)}</td>
+                        <td><span class="status-badge ${statusClass}">${employee.status}</span></td>
+                        <td>
+                            <i class="fas fa-edit action-icon edit-btn" data-id="${employee.id}" title="Edit"></i>
+                            <i class="fas fa-trash action-icon delete-btn" data-id="${employee.id}" title="Delete"></i>
+                        </td>
+                    </tr>
+                `;
+            });
+
+            // Add event listeners to edit and delete buttons
+            document.querySelectorAll('.edit-btn').forEach(btn => {
+                btn.addEventListener('click', () => editEmployee(btn.getAttribute('data-id')));
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', () => deleteEmployee(btn.getAttribute('data-id')));
+            });
+        }
+
+        // Add/Update employee
+        employeeForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form values
+            const name = document.getElementById('empName').value.trim();
+            const position = document.getElementById('position').value.trim();
+            const department = document.getElementById('department').value;
+            const location = document.getElementById('location').value;
+            const salary = parseInt(document.getElementById('salary').value) || 0;
+            const hireDate = document.getElementById('hireDate').value;
+            const status = document.getElementById('status').value;
+            
+            // Validate form
+            if (!name || !position || !department || !location || !hireDate || !status) {
+                alert('Please fill in all required fields');
+                return;
+            }
+
+            if (editingId) {
+                // Update existing employee
+                const index = employees.findIndex(emp => emp.id === editingId);
+                if (index !== -1) {
+                    const updatedEmployee = { 
+                        ...employees[index], 
+                        name, 
+                        position, 
+                        department, 
+                        location, 
+                        salary, 
+                        hireDate, 
+                        status 
+                    };
+                    employees[index] = updatedEmployee;
+                    
+                    // Highlight the updated row
+                    setTimeout(() => {
+                        const row = document.querySelector(`tr[data-id="${editingId}"]`);
+                        if (row) {
+                            row.classList.add('highlight');
+                            setTimeout(() => row.classList.remove('highlight'), 1500);
+                        }
+                    }, 100);
+                    
+                    editingId = null;
+                    formTitle.textContent = 'Add New Employee';
+                    saveBtn.textContent = 'Save Employee';
+                }
+            } else {
+                // Generate new sequential ID
+                const id = String(employees.length + 1).padStart(3, '0');
+                const newEmployee = { 
+                    id, 
+                    name, 
+                    position, 
+                    department, 
+                    location, 
+                    salary, 
+                    hireDate, 
+                    status,
+                    avatar: avatars[Math.floor(Math.random() * avatars.length)]
+                };
+                employees.push(newEmployee);
+                
+                // Highlight the new row
+                setTimeout(() => {
+                    const row = document.querySelector(`tr[data-id="${id}"]`);
+                    if (row) {
+                        row.classList.add('highlight');
+                        setTimeout(() => row.classList.remove('highlight'), 1500);
+                    }
+                }, 100);
+            }
+
+            // Save to localStorage and update display
+            const saved = saveEmployeesToStorage();
+            if (saved) {
+                employeeForm.reset();
+                formContainer.classList.remove('active');
+                displayEmployees();
+            } else {
+                alert('Error saving employee data. Please try again.');
+            }
+        });
+
+        // Edit employee
+        function editEmployee(id) {
+            const employee = employees.find(emp => emp.id === id);
+            if (!employee) return;
+            
+            document.getElementById('empName').value = employee.name;
+            document.getElementById('position').value = employee.position;
+            document.getElementById('department').value = employee.department;
+            document.getElementById('location').value = employee.location;
+            document.getElementById('salary').value = employee.salary;
+            document.getElementById('hireDate').value = employee.hireDate;
+            document.getElementById('status').value = employee.status;
+            
+            editingId = id;
+            formTitle.textContent = 'Edit Employee';
+            saveBtn.textContent = 'Update Employee';
+            formContainer.classList.add('active');
+            
+            // Scroll to form
+            formContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Delete employee
+        function deleteEmployee(id) {
+            if (confirm('Are you sure you want to delete this employee?')) {
+                const row = document.querySelector(`tr[data-id="${id}"]`);
+                if (row) {
+                    row.style.backgroundColor = 'rgba(255, 0, 0, 0.1)';
+                    row.style.transition = 'all 0.3s ease';
+                    setTimeout(() => {
+                        row.style.opacity = '0';
+                        row.style.height = '0';
+                        setTimeout(() => {
+                            employees = employees.filter(emp => emp.id !== id);
+                            // Reassign IDs sequentially
+                            employees = employees.map((emp, index) => ({
+                                ...emp,
+                                id: String(index + 1).padStart(3, '0')
+                            }));
+                            saveEmployeesToStorage();
+                            displayEmployees();
+                        }, 300);
+                    }, 300);
+                }
+            }
+        }
+
+        // Search functionality
+        searchInput.addEventListener('input', () => {
+            const searchTerm = searchInput.value.toLowerCase();
+            if (searchTerm.trim() === '') {
+                displayEmployees();
+            } else {
+                const filteredEmployees = employees.filter(emp => 
+                    emp.name.toLowerCase().includes(searchTerm) ||
+                    emp.position.toLowerCase().includes(searchTerm) ||
+                    emp.department.toLowerCase().includes(searchTerm) ||
+                    emp.location.toLowerCase().includes(searchTerm) ||
+                    emp.status.toLowerCase().includes(searchTerm)
+                );
+                displayEmployees(filteredEmployees);
+            }
+        });
+
+        // Select all functionality
+        selectAll.addEventListener('change', () => {
+            document.querySelectorAll('.employee-checkbox').forEach(checkbox => {
+                checkbox.checked = selectAll.checked;
+            });
+        });
+
+        // Dark mode toggle
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+            const icon = darkModeToggle.querySelector('i');
+            if (document.body.classList.contains('dark')) {
+                icon.classList.remove('fa-moon');
+                icon.classList.add('fa-sun');
+            } else {
+                icon.classList.remove('fa-sun');
+                icon.classList.add('fa-moon');
+            }
+        });
+
+        // Initialize the application
+        function init() {
+            loadEmployees();
+            
+            // Ensure employees are displayed after loading
+            displayEmployees();
+            
+            // Set today's date as default for new employees
+            document.getElementById('hireDate').valueAsDate = new Date();
+        }
+
+        // Start the application
+        init();
+    </script>
+</body>
+</html>
