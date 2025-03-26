@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRUD Employees System</title>
+    <title>CRUD Employees System with Pagination</title>
     
     <!-- Font Awesome for icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -350,11 +350,53 @@
             color: #007bff;
         }
 
-        .flag-icon {
-            width: 16px;
-            height: 16px;
-            margin-right: 5px;
-            vertical-align: middle;
+        /* Pagination Styling */
+        .pagination-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .pagination-info {
+            color: #6c757d;
+            font-size: 14px;
+        }
+
+        .pagination-controls {
+            display: flex;
+            gap: 5px;
+        }
+
+        .pagination-button {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border: 1px solid #dee2e6;
+            background-color: #fff;
+            color: #333;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pagination-button:hover {
+            background-color: #f8f9fa;
+        }
+
+        .pagination-button.active {
+            background-color: #333;
+            color: white;
+            border-color: #333;
+        }
+
+        .pagination-button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
 
         /* Animation Keyframes */
@@ -419,6 +461,11 @@
             
             .employee-avatar {
                 margin-bottom: 5px;
+            }
+            
+            .pagination-container {
+                flex-direction: column;
+                align-items: center;
             }
         }
 
@@ -530,18 +577,24 @@
             background-color: rgba(255, 193, 7, 0.2);
         }
 
-        /* Debug Info */
-        .debug-info {
-            margin-top: 20px;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none;
+        body.dark .pagination-info {
+            color: #adb5bd;
         }
 
-        body.dark .debug-info {
-            background: #393e46;
+        body.dark .pagination-button {
+            background-color: #393e46;
+            border-color: #4a4a4a;
+            color: #f0f0f0;
+        }
+
+        body.dark .pagination-button:hover {
+            background-color: #4a4a4a;
+        }
+
+        body.dark .pagination-button.active {
+            background-color: #f0f0f0;
+            color: #333;
+            border-color: #f0f0f0;
         }
     </style>
 </head>
@@ -618,16 +671,16 @@
                         <label for="location">Location</label>
                         <select class="form-control" id="location" required>
                             <option value="">Select location</option>
-                            <option value="Stockholm">Phnom Penh</option>
-                            <option value="Miami">Battambong</option>
-                            <option value="Kyiv">Paillin</option>
-                            <option value="Ottawa">Svay Reang</option>
-                            <option value="Sao Paulo">Kompong chnam</option>
-                            <option value="London">Kompot</option>
-                            <option value="New York">Kep</option>
-                            <option value="Berlin">Kompong Spue</option>
-                            <option value="Tokyo">Tar keo</option>
-                            <option value="Paris">Porsat</option>
+                            <option value="Phnom Penh">Phnom Penh</option>
+                            <option value="Battambong">Battambong</option>
+                            <option value="Paillin">Paillin</option>
+                            <option value="Svay Reang">Svay Reang</option>
+                            <option value="Kompong chnam">Kompong chnam</option>
+                            <option value="Kompot">Kompot</option>
+                            <option value="Kep">Kep</option>
+                            <option value="Kompong Spue">Kompong Spue</option>
+                            <option value="Tar keo">Tar keo</option>
+                            <option value="Porsat">Porsat</option>
                         </select>
                     </div>
                     <div class="form-group">
@@ -659,7 +712,7 @@
         </div>
 
         <div class="table-container">
-            <table class="table">
+            <table class="table" id="employeeTable">
                 <thead>
                     <tr>
                         <th><input type="checkbox" class="checkbox" id="selectAll"></th>
@@ -677,7 +730,9 @@
             </table>
         </div>
         
-        <div class="debug-info" id="debugInfo"></div>
+        <div id="paginationContainer" class="pagination-container">
+            <!-- Pagination will be inserted here by JavaScript -->
+        </div>
     </div>
 
     <div class="dark-mode-toggle" id="darkModeToggle">
@@ -696,11 +751,12 @@
         const searchInput = document.getElementById('searchInput');
         const darkModeToggle = document.getElementById('darkModeToggle');
         const selectAll = document.getElementById('selectAll');
-        const debugInfo = document.getElementById('debugInfo');
+        const paginationContainer = document.getElementById('paginationContainer');
         
         // State variables
         let employees = [];
         let editingId = null;
+        let pagination = null;
 
         // Sample avatar URLs
         const avatars = [
@@ -712,28 +768,65 @@
             'https://randomuser.me/api/portraits/women/3.jpg'
         ];
 
-        // Country flags
-        const flags = {
-            'Stockholm': '',
-            'Miami': '',
-            'Kyiv': '',
-            'Ottawa': '',
-            'Sao Paulo': '',
-            'London': '',
-            'New York': '',
-            'Berlin': '',
-            'Tokyo': '',
-            'Paris': ''
-        };
-
         // Sample data
         const sampleEmployees = [
-            { id: '001', name: 'Anatoly Belik', position: 'Head of Design', department: 'Product', location: 'Stockholm', salary: 1350, hireDate: '2023-03-13', status: 'Hired', avatar: avatars[0] },
-            { id: '002', name: 'Ksenia Bator', position: 'Fullstack Engineer', department: 'Engineering', location: 'Miami', salary: 1500, hireDate: '2023-10-13', status: 'Absent', avatar: avatars[1] },
-            { id: '003', name: 'Bogdan Nikitin', position: 'Mobile Lead', department: 'Product', location: 'Kyiv', salary: 2600, hireDate: '2023-11-04', status: 'Employed', avatar: avatars[2] },
-            { id: '004', name: 'Arsen Yatsenko', position: 'Sales Manager', department: 'Operations', location: 'Ottawa', salary: 900, hireDate: '2021-09-04', status: 'Employed', avatar: avatars[3] },
-            { id: '005', name: 'Daria Yurchenko', position: 'Network Engineer', department: 'Product', location: 'Sao Paulo', salary: 1000, hireDate: '2023-02-21', status: 'Hired', avatar: avatars[4] },
-            { id: '006', name: 'Yulia Palishchuk', position: 'Head of Design', department: 'Product', location: 'London', salary: 1700, hireDate: '2024-08-02', status: 'Employed', avatar: avatars[5] }
+            { id: '001', name: 'Anatoly Belik', position: 'Head of Design', department: 'Product', location: 'Phnom Penh', salary: 1350, hireDate: '2023-03-13', status: 'Hired', avatar: avatars[0] },
+            { id: '002', name: 'Ksenia Bator', position: 'Fullstack Engineer', department: 'Engineering', location: 'Battambong', salary: 1500, hireDate: '2023-10-13', status: 'Absent', avatar: avatars[1] },
+            { id: '003', name: 'Bogdan Nikitin', position: 'Mobile Lead', department: 'Product', location: 'Paillin', salary: 2600, hireDate: '2023-11-04', status: 'Employed', avatar: avatars[2] },
+            { id: '004', name: 'Arsen Yatsenko', position: 'Sales Manager', department: 'Operations', location: 'Svay Reang', salary: 900, hireDate: '2021-09-04', status: 'Employed', avatar: avatars[3] },
+            { id: '005', name: 'Daria Yurchenko', position: 'Network Engineer', department: 'Product', location: 'Kompong chnam', salary: 1000, hireDate: '2023-02-21', status: 'Hired', avatar: avatars[4] },
+            { id: '006', name: 'Yulia Palishchuk', position: 'Head of Design', department: 'Product', location: 'Kompot', salary: 1700, hireDate: '2024-08-02', status: 'Employed', avatar: avatars[5] },
+            { id: '007', name: 'John Smith', position: 'Frontend Developer', department: 'Engineering', location: 'Kep', salary: 1200, hireDate: '2022-05-15', status: 'Employed', avatar: avatars[0] },
+            { id: '008', name: 'Emma Johnson', position: 'UX Designer', department: 'Product', location: 'Kompong Spue', salary: 1400, hireDate: '2023-01-10', status: 'Hired', avatar: avatars[1] },
+            { id: '009', name: 'Michael Brown', position: 'Backend Developer', department: 'Engineering', location: 'Tar keo', salary: 1600, hireDate: '2022-08-22', status: 'Employed', avatar: avatars[2] },
+            { id: '010', name: 'Sophia Garcia', position: 'Product Manager', department: 'Product', location: 'Porsat', salary: 1800, hireDate: '2021-11-30', status: 'Employed', avatar: avatars[3] },
+            { id: '011', name: 'William Davis', position: 'DevOps Engineer', department: 'Engineering', location: 'Phnom Penh', salary: 1550, hireDate: '2022-03-18', status: 'Hired', avatar: avatars[4] },
+            { id: '012', name: 'Olivia Martinez', position: 'QA Engineer', department: 'Engineering', location: 'Battambong', salary: 1300, hireDate: '2023-06-05', status: 'Invited', avatar: avatars[5] },
+            { id: '013', name: 'James Wilson', position: 'Data Scientist', department: 'Engineering', location: 'Paillin', salary: 1700, hireDate: '2022-09-14', status: 'Employed', avatar: avatars[0] },
+            { id: '014', name: 'Charlotte Anderson', position: 'Marketing Specialist', department: 'Marketing', location: 'Svay Reang', salary: 1100, hireDate: '2023-04-20', status: 'Hired', avatar: avatars[1] },
+            { id: '015', name: 'Benjamin Taylor', position: 'HR Manager', department: 'Operations', location: 'Kompong chnam', salary: 1400, hireDate: '2021-12-10', status: 'Employed', avatar: avatars[2] },
+            { id: '016', name: 'Amelia Thomas', position: 'Content Writer', department: 'Marketing', location: 'Kompot', salary: 950, hireDate: '2023-02-28', status: 'Invited', avatar: avatars[3] },
+            { id: '017', name: 'Lucas Jackson', position: 'Systems Administrator', department: 'Engineering', location: 'Kep', salary: 1350, hireDate: '2022-07-15', status: 'Employed', avatar: avatars[4] },
+            { id: '018', name: 'Mia White', position: 'Financial Analyst', department: 'Operations', location: 'Kompong Spue', salary: 1500, hireDate: '2023-01-05', status: 'Hired', avatar: avatars[5] },
+            { id: '019', name: 'Ethan Harris', position: 'Customer Support', department: 'Operations', location: 'Tar keo', salary: 900, hireDate: '2022-11-22', status: 'Absent', avatar: avatars[0] },
+            { id: '020', name: 'Isabella Martin', position: 'Graphic Designer', department: 'Product', location: 'Porsat', salary: 1200, hireDate: '2023-03-30', status: 'Employed', avatar: avatars[1] },
+            { id: '021', name: 'Alexander Thompson', position: 'Project Manager', department: 'Operations', location: 'Phnom Penh', salary: 1650, hireDate: '2022-02-14', status: 'Employed', avatar: avatars[2] },
+            { id: '022', name: 'Abigail Garcia', position: 'Software Engineer', department: 'Engineering', location: 'Battambong', salary: 1400, hireDate: '2023-05-18', status: 'Hired', avatar: avatars[3] },
+            { id: '023', name: 'Daniel Martinez', position: 'UI Designer', department: 'Product', location: 'Paillin', salary: 1300, hireDate: '2022-08-09', status: 'Employed', avatar: avatars[4] },
+            { id: '024', name: 'Emily Robinson', position: 'Sales Representative', department: 'Sales', location: 'Svay Reang', salary: 1100, hireDate: '2023-01-25', status: 'Invited', avatar: avatars[5] },
+            { id: '025', name: 'Matthew Clark', position: 'Technical Lead', department: 'Engineering', location: 'Kompong chnam', salary: 1800, hireDate: '2021-10-12', status: 'Employed', avatar: avatars[0] },
+            { id: '026', name: 'Madison Rodriguez', position: 'Content Strategist', department: 'Marketing', location: 'Kompot', salary: 1250, hireDate: '2022-12-05', status: 'Hired', avatar: avatars[1] },
+            { id: '027', name: 'David Lewis', position: 'Network Administrator', department: 'Engineering', location: 'Kep', salary: 1350, hireDate: '2023-03-20', status: 'Employed', avatar: avatars[2] },
+            { id: '028', name: 'Sofia Lee', position: 'Business Analyst', department: 'Operations', location: 'Kompong Spue', salary: 1450, hireDate: '2022-06-15', status: 'Absent', avatar: avatars[3] },
+            { id: '029', name: 'Joseph Walker', position: 'Frontend Developer', department: 'Engineering', location: 'Tar keo', salary: 1300, hireDate: '2023-02-10', status: 'Hired', avatar: avatars[4] },
+            { id: '030', name: 'Scarlett Hall', position: 'UX Researcher', department: 'Product', location: 'Porsat', salary: 1400, hireDate: '2022-09-28', status: 'Employed', avatar: avatars[5] },
+            { id: '031', name: 'Samuel Allen', position: 'Backend Developer', department: 'Engineering', location: 'Phnom Penh', salary: 1500, hireDate: '2023-04-15', status: 'Hired', avatar: avatars[0] },
+            { id: '032', name: 'Victoria Young', position: 'Product Owner', department: 'Product', location: 'Battambong', salary: 1700, hireDate: '2022-01-20', status: 'Employed', avatar: avatars[1] },
+            { id: '033', name: 'Christopher King', position: 'DevOps Specialist', department: 'Engineering', location: 'Paillin', salary: 1600, hireDate: '2022-11-10', status: 'Employed', avatar: avatars[2] },
+            { id: '034', name: 'Grace Wright', position: 'Marketing Manager', department: 'Marketing', location: 'Svay Reang', salary: 1550, hireDate: '2023-03-05', status: 'Hired', avatar: avatars[3] },
+            { id: '035', name: 'Andrew Scott', position: 'HR Specialist', department: 'Operations', location: 'Kompong chnam', salary: 1200, hireDate: '2022-07-22', status: 'Invited', avatar: avatars[4] },
+            { id: '036', name: 'Chloe Green', position: 'Content Creator', department: 'Marketing', location: 'Kompot', salary: 1000, hireDate: '2023-01-15', status: 'Employed', avatar: avatars[5] },
+            { id: '037', name: 'Joshua Baker', position: 'Systems Engineer', department: 'Engineering', location: 'Kep', salary: 1450, hireDate: '2022-05-30', status: 'Employed', avatar: avatars[0] },
+            { id: '038', name: 'Lily Adams', position: 'Financial Manager', department: 'Operations', location: 'Kompong Spue', salary: 1650, hireDate: '2022-12-18', status: 'Hired', avatar: avatars[1] },
+            { id: '039', name: 'Ryan Nelson', position: 'Customer Success', department: 'Sales', location: 'Tar keo', salary: 1100, hireDate: '2023-04-25', status: 'Invited', avatar: avatars[2] },
+            { id: '040', name: 'Hannah Hill', position: 'Illustrator', department: 'Product', location: 'Porsat', salary: 1250, hireDate: '2022-08-15', status: 'Employed', avatar: avatars[3] },
+            { id: '041', name: 'Nathan Ramirez', position: 'Scrum Master', department: 'Operations', location: 'Phnom Penh', salary: 1500, hireDate: '2023-02-05', status: 'Hired', avatar: avatars[4] },
+            { id: '042', name: 'Zoe Campbell', position: 'Software Developer', department: 'Engineering', location: 'Battambong', salary: 1400, hireDate: '2022-10-12', status: 'Employed', avatar: avatars[5] },
+            { id: '043', name: 'Caleb Mitchell', position: 'UI/UX Designer', department: 'Product', location: 'Paillin', salary: 1350, hireDate: '2023-03-28', status: 'Employed', avatar: avatars[0] },
+            { id: '044', name: 'Audrey Roberts', position: 'Account Manager', department: 'Sales', location: 'Svay Reang', salary: 1200, hireDate: '2022-06-10', status: 'Absent', avatar: avatars[1] },
+            { id: '045', name: 'Elijah Carter', position: 'Engineering Manager', department: 'Engineering', location: 'Kompong chnam', salary: 1800, hireDate: '2022-01-15', status: 'Employed', avatar: avatars[2] },
+            { id: '046', name: 'Layla Phillips', position: 'SEO Specialist', department: 'Marketing', location: 'Kompot', salary: 1150, hireDate: '2023-05-20', status: 'Hired', avatar: avatars[3] },
+            { id: '047', name: 'Owen Evans', position: 'Database Administrator', department: 'Engineering', location: 'Kep', salary: 1400, hireDate: '2022-09-05', status: 'Employed', avatar: avatars[4] },
+            { id: '048', name: 'Nora Turner', position: 'Operations Analyst', department: 'Operations', location: 'Kompong Spue', salary: 1300, hireDate: '2023-02-18', status: 'Invited', avatar: avatars[5] },
+            { id: '049', name: 'Levi Torres', position: 'Mobile Developer', department: 'Engineering', location: 'Tar keo', salary: 1450, hireDate: '2022-11-30', status: 'Employed', avatar: avatars[0] },
+            { id: '050', name: 'Stella Parker', position: 'User Researcher', department: 'Product', location: 'Porsat', salary: 1350, hireDate: '2023-04-10', status: 'Hired', avatar: avatars[1] },
+            { id: '051', name: 'Gabriel Collins', position: 'Backend Engineer', department: 'Engineering', location: 'Phnom Penh', salary: 1500, hireDate: '2022-07-25', status: 'Employed', avatar: avatars[2] },
+            { id: '052', name: 'Aurora Edwards', position: 'Product Designer', department: 'Product', location: 'Battambong', salary: 1400, hireDate: '2023-01-08', status: 'Hired', avatar: avatars[3] },
+            { id: '053', name: 'Leo Stewart', position: 'Cloud Engineer', department: 'Engineering', location: 'Paillin', salary: 1550, hireDate: '2022-10-15', status: 'Employed', avatar: avatars[4] },
+            { id: '054', name: 'Hazel Sanchez', position: 'Digital Marketer', department: 'Marketing', location: 'Svay Reang', salary: 1200, hireDate: '2023-03-22', status: 'Invited', avatar: avatars[5] },
+            { id: '055', name: 'Miles Morris', position: 'HR Coordinator', department: 'Operations', location: 'Kompong chnam', salary: 1100, hireDate: '2022-05-10', status: 'Employed', avatar: avatars[0] },
+            { id: '056', name: 'Eleanor Rogers', position: 'Content Editor', department: 'Marketing', location: 'Kompot', salary: 1050, hireDate: '2023-02-15', status: 'Hired', avatar: avatars[1] },
+            { id: '057', name: 'Ezra Reed', position: 'IT Support', department: 'Engineering', location: 'Kep', salary: 1150, hireDate: '2022-08-20', status: 'Employed', avatar: avatars[2] }
         ];
 
         // Load employees from localStorage or use sample data
@@ -812,7 +905,6 @@
                 const location = employee.location || 'Unknown';
                 const department = employee.department || 'Unknown';
                 const statusClass = `status-${status.toLowerCase()}`;
-                const flagEmoji = flags[location] || '🌍';
                 
                 employeeList.innerHTML += `
                     <tr data-id="${employee.id}">
@@ -843,6 +935,9 @@
             document.querySelectorAll('.delete-btn').forEach(btn => {
                 btn.addEventListener('click', () => deleteEmployee(btn.getAttribute('data-id')));
             });
+            
+            // Initialize or update pagination
+            initPagination();
         }
 
         // Add/Update employee
@@ -1014,11 +1109,148 @@
             }
         });
 
+        // Pagination class
+        class Pagination {
+            constructor(tableId, rowsPerPage = 10) {
+                this.tableId = tableId;
+                this.table = document.getElementById(tableId);
+                this.tbody = this.table.querySelector('tbody');
+                this.rowsPerPage = rowsPerPage;
+                this.currentPage = 1;
+                this.paginationContainer = document.getElementById('paginationContainer');
+                
+                this.render();
+            }
+            
+            get rows() {
+                return Array.from(this.tbody.querySelectorAll('tr'));
+            }
+            
+            get totalPages() {
+                return Math.ceil(this.rows.length / this.rowsPerPage);
+            }
+            
+            render() {
+                this.showPage(this.currentPage);
+                this.renderPagination();
+            }
+            
+            showPage(page) {
+                if (page < 1) page = 1;
+                if (page > this.totalPages) page = this.totalPages;
+                
+                this.currentPage = page;
+                
+                const rows = this.rows;
+                const startIndex = (page - 1) * this.rowsPerPage;
+                const endIndex = Math.min(startIndex + this.rowsPerPage, rows.length);
+                
+                // Hide all rows
+                rows.forEach(row => {
+                    row.style.display = 'none';
+                });
+                
+                // Show rows for current page
+                for (let i = startIndex; i < endIndex; i++) {
+                    if (rows[i]) {
+                        rows[i].style.display = '';
+                    }
+                }
+                
+                this.renderPagination();
+            }
+            
+            renderPagination() {
+                const rows = this.rows;
+                const startIndex = (this.currentPage - 1) * this.rowsPerPage;
+                const endIndex = Math.min(startIndex + this.rowsPerPage, rows.length);
+                
+                this.paginationContainer.innerHTML = `
+                    <div class="pagination-info">
+                        Showing ${rows.length > 0 ? startIndex + 1 : 0} to ${endIndex} of ${rows.length} entries
+                    </div>
+                    <div class="pagination-controls">
+                        ${this.renderPaginationControls()}
+                    </div>
+                `;
+                
+                // Add event listeners to pagination buttons
+                this.paginationContainer.querySelectorAll('.pagination-button').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        if (btn.classList.contains('disabled')) return;
+                        
+                        const action = btn.getAttribute('data-action');
+                        if (action === 'first') {
+                            this.showPage(1);
+                        } else if (action === 'prev') {
+                            this.showPage(this.currentPage - 1);
+                        } else if (action === 'next') {
+                            this.showPage(this.currentPage + 1);
+                        } else if (action === 'last') {
+                            this.showPage(this.totalPages);
+                        } else if (action === 'page') {
+                            this.showPage(parseInt(btn.textContent));
+                        }
+                    });
+                });
+            }
+            
+            renderPaginationControls() {
+                const totalPages = this.totalPages;
+                
+                if (totalPages <= 1) {
+                    return '';
+                }
+                
+                let html = '';
+                
+                // First page button
+                html += `<button class="pagination-button ${this.currentPage === 1 ? 'disabled' : ''}" data-action="first" ${this.currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-angle-double-left"></i>
+                </button>`;
+                
+                // Previous page button
+                html += `<button class="pagination-button ${this.currentPage === 1 ? 'disabled' : ''}" data-action="prev" ${this.currentPage === 1 ? 'disabled' : ''}>
+                    <i class="fas fa-angle-left"></i>
+                </button>`;
+                
+                // Page numbers
+                const maxVisiblePages = 5;
+                let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+                let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+                
+                if (endPage - startPage + 1 < maxVisiblePages) {
+                    startPage = Math.max(1, endPage - maxVisiblePages + 1);
+                }
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    html += `<button class="pagination-button ${i === this.currentPage ? 'active' : ''}" data-action="page">
+                        ${i}
+                    </button>`;
+                }
+                
+                // Next page button
+                html += `<button class="pagination-button ${this.currentPage === totalPages ? 'disabled' : ''}" data-action="next" ${this.currentPage === totalPages ? 'disabled' : ''}>
+                    <i class="fas fa-angle-right"></i>
+                </button>`;
+                
+                // Last page button
+                html += `<button class="pagination-button ${this.currentPage === totalPages ? 'disabled' : ''}" data-action="last" ${this.currentPage === totalPages ? 'disabled' : ''}>
+                    <i class="fas fa-angle-double-right"></i>
+                </button>`;
+                
+                return html;
+            }
+        }
+
+        // Initialize pagination
+        function initPagination() {
+            pagination = new Pagination('employeeTable', 10);
+        }
+
         // Initialize the application
         function init() {
             loadEmployees();
-            
-            // Ensure employees are displayed after loading
             displayEmployees();
             
             // Set today's date as default for new employees
